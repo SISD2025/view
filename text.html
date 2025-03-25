@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Flip Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #book-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 1100px;
+    height: 750px;
+    background: url('bg_sustainability.webp') no-repeat center center;
+    background-size: cover;
+    margin: auto;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 100, 0, 0.3); /* Green shadow effect */
+}
+
+        #book {
+            width: 1000px;
+            height: 700px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        .page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: white;
+        }
+        .page img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #controls {
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+        }
+        .nav-btn {
+            padding: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.8;
+        }
+        .nav-btn:hover {
+            background-color: #0056b3;
+            opacity: 1;
+        }
+        #download-btn {
+    background-color: #28a745; /* Green for sustainability */
+    color: white;
+    font-size: 18px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 128, 0, 0.3);
+}
+
+#download-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+        
+    </style>
+</head>
+<body>
+<h2>International Conference</h2>
+    <h1>Sustainable Innovations in Statistics and Data Science (SISD-2025)</h1>
+    <p> Proceedings</p>
+
+    <div id="book-container">
+        <button id="prev" class="nav-btn">⬅️</button>
+        <div id="book"></div>
+        <button id="next" class="nav-btn">➡️</button>
+    </div>
+
+    <!-- Load jQuery & Turn.js -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            console.log("JavaScript Loaded!");
+            
+            // CONFIGURATION
+            const config = {
+                prefix: 'page',  
+                suffix: '.jpg',  
+                startPage: 1,    
+                maxPages: 10,    
+                zeroPad: false,  
+                folder: ''       
+            };
+
+            const $book = $('#book');
+            let foundPages = [];
+
+            function checkPage(pageNum) {
+                if (pageNum > config.maxPages) {
+                    if (foundPages.length > 0) {
+                        initBook();
+                    } else {
+                        console.error("❌ No pages found!");
+                        $('#book-container').html("<h2 style='color: red;'>Error: No pages found!</h2>");
+                    }
+                    return;
+                }
+
+                const numStr = config.zeroPad ? pageNum.toString().padStart(2, '0') : pageNum.toString();
+                const filename = config.folder + config.prefix + numStr + config.suffix;
+                console.log(`Checking file: ${filename}`);
+
+                const img = new Image();
+                img.onload = function () {
+                    console.log(`✅ Found: ${filename}`);
+                    foundPages.push(`
+                        <div class="page">
+                            <img src="${filename}" alt="Page ${pageNum}">
+                        </div>
+                    `);
+                    checkPage(pageNum + 1);
+                };
+                img.onerror = function () {
+                    console.warn(`⚠️ Missing: ${filename}`);
+                    checkPage(pageNum + 1);
+                };
+                img.src = filename;
+            }
+
+            function initBook() {
+                console.log(`✅ Success! Found ${foundPages.length} pages.`);
+                $book.html(foundPages.join(''));
+
+                // Initialize turn.js with **slower page flip**
+                $book.turn({
+                    width: 1000,
+                    height: 700,
+                    display: 'double',
+                    acceleration: true,
+                    gradients: true,  
+                    elevation: 50,    
+                    autoCenter: true,
+                    duration: 1500,   // 🔹 **Slower flip speed (default is ~600ms)**
+                    when: {
+                        turning: function (e, page) {
+                            console.log(`📖 Page turned to ${page}`);
+                        }
+                    }
+                });
+
+                // Navigation Buttons
+                $('#prev').click(() => $book.turn('previous'));
+                $('#next').click(() => $book.turn('next'));
+
+                // Arrow Key Navigation
+                $(document).keydown(e => {
+                    if (e.key === 'ArrowLeft') $book.turn('previous');
+                    if (e.key === 'ArrowRight') $book.turn('next');
+                });
+
+                // Click to flip pages
+                $book.on("click", function (event) {
+                    let center = $(this).width() / 2;
+                    if (event.pageX < center) {
+                        $book.turn('previous');
+                    } else {
+                        $book.turn('next');
+                    }
+                });
+            }
+
+            // Start Checking Pages
+            checkPage(config.startPage);
+        });
+    </script>
+ <br>
+    <a href="sisd.pdf" download="SISD-2025_Proceedings.pdf">
+        <button id="download-btn">📥 Download Proceedings</button>
+    </a>
+</body>
+</html>
+
